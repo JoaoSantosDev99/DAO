@@ -3,7 +3,7 @@ pragma solidity ^0.8.13;
 
 import "openzeppelin-contracts/access/Ownable.sol";
 
-contract DAO is Ownable {
+contract SinglePropDao is Ownable {
   mapping(uint256 => Proposal) public proposals;
   mapping(string => uint256) public nameToId;
   mapping(address => mapping(uint256 => bool)) public hasVotedFor;
@@ -19,8 +19,8 @@ contract DAO is Ownable {
   }
 
   function newProposal(string memory _name, uint256 _target) public onlyOwner {
-    proposals[0] = Proposal(_name, _target, 0, false, false);
-    nameToId[_name] = 0;
+    proposals[totalProposals] = Proposal(_name, _target, 0, false, false);
+    nameToId[_name] = totalProposals;
     totalProposals++;
   }
 
@@ -32,6 +32,17 @@ contract DAO is Ownable {
     );
 
     proposals[_id].votesBalance += 1;
+
+    if (proposals[_id].votesBalance >= proposals[_id].votesTarget) {
+      proposals[_id].approved = true;
+      proposals[_id].closed = true;
+    }
+
     hasVotedFor[msg.sender][_id] = true;
+  }
+
+  function closeProposal(uint256 _id) public onlyOwner {
+    require(!proposals[_id].closed, "This proposal is already closed.");
+    proposals[_id].closed = true;
   }
 }
